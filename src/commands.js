@@ -165,71 +165,79 @@ const commands = {
   test1: {
     description: "test command #1",
     async handle(message, args, data) {
-      let guild = message.guild;
-      let GENERAL_CHAT = message.client.channels.get('540633148791455756');
+      try {
+        let guild = message.guild;
+        let GENERAL_CHAT = message.client.channels.get('540633148791455756');
 
-      let obj = JSON.parse(fs.readFileSync('./time.json', 'utf8'));
-      obj.week = moment().week();
+        let obj = JSON.parse(fs.readFileSync('./time.json', 'utf8'));
+        obj.week = moment().week();
 
-      console.log(`[EOW CHECK] Week ended! Updated rankings.`);
+        console.log(`[EOW CHECK] Week ended! Updated rankings.`);
 
-      obj.week = moment().week();
-      fs.writeFileSync('./time.json', JSON.stringify(obj));
+        obj.week = moment().week();
+        fs.writeFileSync('./time.json', JSON.stringify(obj));
 
-      obj = JSON.parse(fs.readFileSync("./members.json", "utf8"));
-      let sortedArray = [];
+        obj = JSON.parse(fs.readFileSync("./members.json", "utf8"));
+        let sortedArray = [];
 
-      for (let a in obj) {
-        sortedArray.push([a, obj[a]])
-      }
-
-      sortedArray.sort(function (a, b) { return a[1] - b[1]; });
-      sortedArray.reverse();
-
-      let placement = 1;
-
-      // Embed Declaration
-      let rankingEmbed = new Discord.RichEmbed()
-        .setColor('#ADBCE6')
-        .setTitle('Ranking')
-        .setAuthor('praise me', message.client.user.avatarURL)
-        .setDescription('***The week has ended! Here are the rankings for next week\'s time:***')
-        .setFooter(`Rankings updating ${moment().endOf('week').fromNow()}`);
-
-      // Role Declarations
-      let lurkRole = guild.roles.get('672811156523712522');
-      let separator = guild.roles.get('673201333658189856');
-
-      let lurkers = "";
-      sortedArray.forEach(async element => {
-        process.setMaxListeners(0);
-
-        if (element[1] > 0) {
-          rankingEmbed.fields.push({ name: `#${placement}`, value: `<@${element[0]}>\n${element[1]} messages`, inline: true }); // fields get pushed into embed
-          await guild.members.get(element[0]).roles.forEach(async element => {
-            if (element.name !== "Lurker" || element.name !== "@everyone") {
-              await element.setPosition(separator.position - placement);
-            }
-          });
-
-          placement++;
+        for (let a in obj) {
+          sortedArray.push([a, obj[a]])
         }
-        else {
+
+        sortedArray.sort(function (a, b) { return a[1] - b[1]; });
+        sortedArray.reverse();
+
+        let placement = 1;
+        let ranking = 1;
+
+        // Embed Declaration
+        let rankingEmbed = new Discord.RichEmbed()
+          .setColor('#ADBCE6')
+          .setTitle('Ranking')
+          .setAuthor('praise me', message.client.user.avatarURL)
+          .setDescription('***The week has ended! Here are the rankings for next week\'s time:***')
+          .setFooter(`Rankings updating ${moment().endOf('week').fromNow()}`);
+
+        // Role Declarations
+        let lurkRole = guild.roles.get('672811156523712522');
+        let separator = guild.roles.get('673201333658189856');
+
+        let lurkers = "";
+        sortedArray.forEach(async element => {
           process.setMaxListeners(0);
-          lurkers += `<@${element[0]}> `;
-          let userE = await message.client.fetchUser(element[0]);
-          let memE = await message.guild.member(userE);
-          await memE.roles.forEach(async element => {
-            if (element.name !== "Lurker" || element.name !== "@everyone") {
-              await element.setPosition(lurkRole.position - 1);
-            }
-          });
-          await memE.addRole('672811156523712522').catch(console.error());
-        }
-      });
-      rankingEmbed.fields.push({ name: `Lurkers`, value: lurkers, inline: false });
 
-      return message.channel.send(rankingEmbed);
+          if (element[1] > 0) {
+            rankingEmbed.fields.push({ name: `#${placement}`, value: `<@${element[0]}>\n${element[1]} messages`, inline: true }); // fields get pushed into embed
+
+            placement++;
+
+            await guild.members.get(element[0]).roles.forEach(async element => {
+              if (element.name !== "Lurker" && element.name !== "@everyone" && element.name !== "---") {
+                await element.setPosition(separator.position - ranking);
+                console.log(separator.position - ranking);
+                ranking++;
+              }
+            });
+          }
+          else {
+            process.setMaxListeners(0);
+            lurkers += `<@${element[0]}> `;
+            let userE = await message.client.fetchUser(element[0]);
+            let memE = await message.guild.member(userE);
+            await memE.roles.forEach(async element => {
+              if (element.name !== "Lurker" && element.name !== "@everyone" && element.name !== "---") {
+                await element.setPosition(lurkRole.position - 1);
+              }
+            });
+            await memE.addRole('672811156523712522').catch(console.error());
+          }
+        });
+        rankingEmbed.fields.push({ name: `Lurkers`, value: lurkers, inline: false });
+
+        return message.channel.send(rankingEmbed);
+      } catch (err) {
+        console.log(err);
+      }
     }
   },
   test2: {
