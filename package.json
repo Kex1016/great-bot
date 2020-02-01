@@ -1,0 +1,22 @@
+{
+  "name": "goodbot",
+  "version": "0.0.1",
+  "description": "a not very good bot",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "node -r esm src/main.js"
+  },
+  "dependencies": {
+    "array-flatten": "^2.1.2",
+    "discord.js": "^11.4.2",
+    "dotenv": "^6.2.0",
+    "esm": "^3.2.14",
+    "moment": "^2.24.0",
+    "moment-timezone": "^0.5.27",
+    "nekos.life": "^2.0.5",
+    "node-fetch": "^2.3.0",
+    "require-text": "^0.0.1"
+  },
+  "author": "Kex1016",
+  "license": "MIT"
+}
