@@ -18,11 +18,11 @@ const commands = {
   carnage: {
     description: "No u",
     async handle(message) {
-      var resp1 = await neko.sfw.neko();
-      var resp2 = await neko.sfw.kemonomimi();
-      var resp3 = await neko.sfw.nekoGif();
-      var resp, text;
-      var random = getRandomInt(2);
+      let resp1 = await neko.sfw.neko();
+      let resp2 = await neko.sfw.kemonomimi();
+      let resp3 = await neko.sfw.nekoGif();
+      let resp, text;
+      let random = getRandomInt(2);
       if (random === 0) {
         resp = resp1; text = "Neko";
       } else if (random === 1) {
@@ -30,7 +30,7 @@ const commands = {
       } else if (random == 2) {
         resp = resp3; text = "Neko GIF";
       }
-      var embed = {
+      let embed = {
         author: {
           name: text,
           icon_url: message.client.user.avatarURL
@@ -51,9 +51,9 @@ const commands = {
     description: "Kex only, dangerous command",
     async handle(message, args, data) {
       if (message.author.id === "147709526357966848") {
-        var guild = message.guild;
-        var json1 = `{`
-        var i = 0, members = 0;
+        let guild = message.guild;
+        let json1 = `{`
+        let i = 0, members = 0;
         guild.members.forEach(element => {
           if (!element.user.bot) {
             if (i === guild.members.length - 1) {
@@ -81,16 +81,16 @@ const commands = {
           dow: 1
         }
       });
-      var obj = JSON.parse(fs.readFileSync("./members.json", "utf8")), sorted = [];
+      let obj = JSON.parse(fs.readFileSync("./members.json", "utf8")), sorted = [];
 
-      for (var a in obj) {
+      for (let a in obj) {
         sorted.push([a, obj[a]])
       }
       sorted.sort(function (a, b) { return a[1] - b[1] });
       sorted.reverse();
 
-      var placement = 1;
-      var embed = {
+      let placement = 1;
+      let embed = {
         title: "Rankings",
         author: {
           name: "praise me",
@@ -103,7 +103,7 @@ const commands = {
         },
         fields: []
       };
-      var lurkers = "";
+      let lurkers = "";
       sorted.forEach(element => {
         if (element[1] > 0) {
           embed.fields.push({ name: `#${placement}`, value: `<@${element[0]}>\n${element[1]} messages`, inline: true });
@@ -119,7 +119,7 @@ const commands = {
   '8ball': {
     description: "Ask the 8ball.",
     async handle(message, args, data) {
-      var { neko } = await NekoGet(message, '8Ball');
+      let { neko } = await NekoGet(message, '8Ball');
 
       const embed = {
         title: "8ball",
@@ -164,78 +164,81 @@ const commands = {
   },
   test1: {
     description: "test command #1",
-    handle(message, args, data) {
-      var guild = message.guild;
-      var general = message.client.channels.get('540633148791455756');
-      var obj = JSON.parse(fs.readFileSync('./time.json', 'utf8'));
+    async handle(message, args, data) {
+      let guild = message.guild;
+      let GENERAL_CHAT = message.client.channels.get('540633148791455756');
+
+      let obj = JSON.parse(fs.readFileSync('./time.json', 'utf8'));
+      obj.week = moment().week();
+
       console.log(`[EOW CHECK] Week ended! Updated rankings.`);
+
       obj.week = moment().week();
       fs.writeFileSync('./time.json', JSON.stringify(obj));
 
-      var obj = JSON.parse(fs.readFileSync("./members.json", "utf8")), sorted = [];
+      obj = JSON.parse(fs.readFileSync("./members.json", "utf8"));
+      let sortedArray = [];
 
-      for (var a in obj) {
-        sorted.push([a, obj[a]])
+      for (let a in obj) {
+        sortedArray.push([a, obj[a]])
       }
-      sorted.sort(function (a, b) { return a[1] - b[1] });
-      sorted.reverse();
 
-      var placement = 1;
-      var embed = {
-        title: "Ranking",
-        author: {
-          name: "praise me",
-          icon_url: message.client.user.avatarURL
-        },
-        color: 4044018,
-        description: "***The week has ended! Here are the rankings for next week's time:***",
-        footer: {
-          text: `Rankings updating ${moment().endOf('week').fromNow()}`
-        },
-        fields: []
-      };
-      var lurkRole = guild.roles.get('672811156523712522');
-      var separator = guild.roles.get('673201333658189856');
-      var lurkers = "";
-      sorted.forEach(async element => {
+      sortedArray.sort(function (a, b) { return a[1] - b[1]; });
+      sortedArray.reverse();
+
+      let placement = 1;
+
+      // Embed Declaration
+      let rankingEmbed = new Discord.RichEmbed()
+        .setColor('#ADBCE6')
+        .setTitle('Ranking')
+        .setAuthor('praise me', message.client.user.avatarURL)
+        .setDescription('***The week has ended! Here are the rankings for next week\'s time:***')
+        .setFooter(`Rankings updating ${moment().endOf('week').fromNow()}`);
+
+      // Role Declarations
+      let lurkRole = guild.roles.get('672811156523712522');
+      let separator = guild.roles.get('673201333658189856');
+
+      let lurkers = "";
+      sortedArray.forEach(async element => {
         process.setMaxListeners(0);
+
         if (element[1] > 0) {
-          embed.fields.push({ name: `#${placement}`, value: `<@${element[0]}>\n${element[1]} messages`, inline: true });
-          setTimeout(async () => {
-            await guild.members.get(element[0]).roles.forEach(async element => {
-              if (element.name != "Lurker" || element.name != "@everyone") {
-                await element.setPosition(separator.position - placement);
-              }
-            });
-          }, 50);
+          rankingEmbed.fields.push({ name: `#${placement}`, value: `<@${element[0]}>\n${element[1]} messages`, inline: true }); // fields get pushed into embed
+          await guild.members.get(element[0]).roles.forEach(async element => {
+            if (element.name !== "Lurker" || element.name !== "@everyone") {
+              await element.setPosition(separator.position - placement);
+            }
+          });
+
           placement++;
-        } else {
+        }
+        else {
           process.setMaxListeners(0);
           lurkers += `<@${element[0]}> `;
-          var userE = await message.client.fetchUser(element[0]);
-          var memE = await message.guild.member(userE);
-          setTimeout(async () => {
-            await memE.roles.forEach(async element => {
-              if (element.name != "Lurker" || element.name != "@everyone") {
-                await element.setPosition(lurkRole.position - 1);
-              }
-            });
-            await memE.addRole('672811156523712522').catch(console.error());
-          }, 50);
+          let userE = await message.client.fetchUser(element[0]);
+          let memE = await message.guild.member(userE);
+          await memE.roles.forEach(async element => {
+            if (element.name !== "Lurker" || element.name !== "@everyone") {
+              await element.setPosition(lurkRole.position - 1);
+            }
+          });
+          await memE.addRole('672811156523712522').catch(console.error());
         }
       });
-      embed.fields.push({ name: `Lurkers`, value: lurkers, inline: false });
+      rankingEmbed.fields.push({ name: `Lurkers`, value: lurkers, inline: false });
 
-      message.channel.send({ embed });
+      return message.channel.send(rankingEmbed);
     }
   },
   test2: {
     description: "test command #2",
     async handle(message, args, data) {
-      var guild = message.guild;
-      var general = message.client.channels.get('540633148791455756');
-      var pos = guild.roles.get("672811156523712522").position - 1;
-      var separator = guild.roles.get('673201333658189856');
+      let guild = message.guild;
+      let general = message.client.channels.get('540633148791455756');
+      let pos = guild.roles.get("672811156523712522").position - 1;
+      let separator = guild.roles.get('673201333658189856');
 
 
     }
@@ -264,10 +267,10 @@ function getRandomInt(max) {
 }
 
 function sortByKey(jsObj) {
-  var sortedArray = [];
+  let sortedArray = [];
 
   // Push each JSON Object entry in array by [key, value]
-  for (var i in jsObj) {
+  for (let i in jsObj) {
     sortedArray.push([i, jsObj[i]]);
   }
 
@@ -279,8 +282,8 @@ async function NekoGet(message, type, text) {
   const client = require('nekos.life');
   const { sfw } = await new client();
   if (type === "OwOify") {
-    var neko = await sfw[type]({ text: text });
-  } else { var neko = await sfw[type](); }
+    let neko = await sfw[type]({ text: text });
+  } else { let neko = await sfw[type](); }
 
   return {
     neko: neko,

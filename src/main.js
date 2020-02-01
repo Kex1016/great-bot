@@ -20,33 +20,33 @@ client.on("ready", () => {
       dow: 1
     }
   });
-  var general = client.channels.get('540633148791455756');
-  var server = general.guild;
-  var eow = moment().endOf('week').fromNow();
-  var obj = JSON.parse(fs.readFileSync('./time.json', 'utf8'));
-  obj.week = moment().week();
-  fs.writeFileSync('./time.json', JSON.stringify(obj));
-  general.setTopic(`Season ${obj.season}.\nRankings update ${eow}.\nCurrent placements: **!!rankings**`);
+  let general = client.channels.get('540633148791455756');
+  let server = general.guild;
+  let eow = moment().endOf('week').fromNow();
+  let timeObj = JSON.parse(fs.readFileSync('./time.json', 'utf8'));
+  timeObj.week = moment().week();
+  fs.writeFileSync('./time.json', JSON.stringify(timeObj));
+  general.setTopic(`Season ${timeObj.season}.\nRankings update ${eow}.\nCurrent placements: **!!rankings**`);
 
-  console.log(`Logged in as ${client.user.tag}\n\nEnd of week ${eow}\nWeek of year: ${obj.week}`);
+  console.log(`Logged in as ${client.user.tag}\n\nEnd of week ${eow}\nWeek of year: ${timeObj.week}`);
 
   setInterval(() => {
-    var obj = JSON.parse(fs.readFileSync('./time.json', 'utf8'));
-    if (moment().week() > obj.week) {
+    let timeObj = JSON.parse(fs.readFileSync('./time.json', 'utf8'));
+    if (moment().week() > timeObj.week) {
       console.log(`[EOW CHECK] Week ended! Updated rankings.`);
-      obj.week = moment().week();
-      fs.writeFileSync('./time.json', JSON.stringify(obj));
+      timeObj.week = moment().week();
+      fs.writeFileSync('./time.json', JSON.stringify(timeObj));
 
-      var obj = JSON.parse(fs.readFileSync("./members.json", "utf8")), sorted = [];
+      let obj = JSON.parse(fs.readFileSync("./members.json", "utf8")), sorted = [];
 
-      for (var a in obj) {
+      for (let a in obj) {
         sorted.push([a, obj[a]])
       }
       sorted.sort(function (a, b) { return a[1] - b[1] });
       sorted.reverse();
 
-      var placement = 1;
-      var embed = {
+      let placement = 1;
+      let embed = {
         title: "Ranking",
         author: {
           name: "praise me",
@@ -59,7 +59,7 @@ client.on("ready", () => {
         },
         fields: []
       };
-      var lurkers = "";
+      let lurkers = "";
       sorted.forEach(element => {
         if (element[1] > 0) {
           embed.fields.push({ name: `#${placement}`, value: `<@${element[0]}>\n${element[1]} messages`, inline: true });
@@ -73,10 +73,10 @@ client.on("ready", () => {
       general.send({ embed });
     } else {
       console.log(`[EOW CHECK] End of week in: ${eow}`);
-      obj.week = moment().week();
-      fs.writeFileSync('./time.json', JSON.stringify(obj));
+      timeObj.week = moment().week();
+      fs.writeFileSync('./time.json', JSON.stringify(timeObj));
     }
-    general.setTopic(`Season ${obj.season}.\nRankings update ${eow}.\nCurrent placements: **!!rankings**`);
+    general.setTopic(`Season ${timeObj.season}.\nRankings update ${eow}.\nCurrent placements: **!!rankings**`);
     //  Check this week's ranking with \`!!ranking\`
   }, 60000);
 
@@ -91,11 +91,11 @@ client.on("message", async msg => {
 
   if (msg.author.bot) return;
 
-  var hooks = await msg.guild.fetchWebhooks();
+  let hooks = await msg.guild.fetchWebhooks();
 
   hooks.forEach(element => {
     if (msg.channel.id === element.channelID) {
-      var obj = JSON.parse(fs.readFileSync('./members.json', 'utf8'));
+      let obj = JSON.parse(fs.readFileSync('./members.json', 'utf8'));
       obj[msg.author.id]++;
       console.log(`[MSG - ${msg.author.tag} - #${msg.channel.name}] ${obj[msg.author.id]} messages`);
       fs.writeFileSync('./members.json', JSON.stringify(obj));
