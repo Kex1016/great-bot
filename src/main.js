@@ -33,44 +33,107 @@ client.on("ready", () => {
   setInterval(() => {
     let timeObj = JSON.parse(fs.readFileSync('./time.json', 'utf8'));
     if (moment().week() > timeObj.week) {
-      console.log(`[EOW CHECK] Week ended! Updated rankings.`);
-      timeObj.week = moment().week();
-      fs.writeFileSync('./time.json', JSON.stringify(timeObj));
+      try {
+        let guild = client.guilds.get("540633148791455754");
+        let GENERAL_CHAT = client.channels.get('540633148791455756');
 
-      let obj = JSON.parse(fs.readFileSync("./members.json", "utf8")), sorted = [];
+        let obj = JSON.parse(fs.readFileSync('./time.json', 'utf8'));
+        obj.week = moment().week();
 
-      for (let a in obj) {
-        sorted.push([a, obj[a]])
-      }
-      sorted.sort(function (a, b) { return a[1] - b[1] });
-      sorted.reverse();
+        console.log(`[EOW CHECK] Week ended! Updated rankings.`);
 
-      let placement = 1;
-      let embed = {
-        title: "Ranking",
-        author: {
-          name: "praise me",
-          icon_url: client.user.avatarURL
-        },
-        color: 4044018,
-        description: "***The week has ended! Here are the rankings for next week's time:***",
-        footer: {
-          text: `The bot is currently in test mode, so none of the roles will be actually changed.`
-        },
-        fields: []
-      };
-      let lurkers = "";
-      sorted.forEach(element => {
-        if (element[1] > 0) {
-          embed.fields.push({ name: `#${placement}`, value: `<@${element[0]}>\n${element[1]} messages`, inline: true });
-          placement++;
-        } else {
-          lurkers += `<@${element[0]}> `;
+        obj.week = moment().week();
+        fs.writeFileSync('./time.json', JSON.stringify(obj));
+
+        obj = JSON.parse(fs.readFileSync("./members.json", "utf8"));
+        let sortedArray = [];
+
+        for (let a in obj) {
+          sortedArray.push([a, obj[a]])
         }
-      });
-      embed.fields.push({ name: `Lurkers`, value: lurkers, inline: false });
 
-      general.send({ embed });
+        sortedArray.sort(function (a, b) { return a[1] - b[1]; });
+        sortedArray.reverse();
+
+        let placement = 1;
+
+        // Embed Declaration
+        let rankingEmbed =
+          new Discord.RichEmbed()
+            .setColor('#ADBCE6')
+            .setTitle('Ranking')
+            .setAuthor('praise me', client.user.avatarURL)
+            .setDescription(
+              '***The week has ended! Here are the rankings for next week\'s time:***');
+
+        let sum = 0, total = 0, avg = 0;
+
+        sortedArray.forEach(element => {
+          if (element[1] !== 0) {
+            sum += element[1];
+            total++;
+          }
+        })
+
+        avg = sum / total;
+        rankingEmbed.setFooter(
+          `Average amount of messages this week: ${Math.round(avg)}`);
+
+        let top = "", close = "", regular = "", barely = "", lurk = "", lurkers = "";
+
+        process.setMaxListeners(0);
+
+        (async () => {
+          for (let i = 0; i < sortedArray.length; i++) {
+            const element = sortedArray[i];
+
+            if (element[1] !== 0) {
+              rankingEmbed.fields.push({
+                name: `#${placement}`,
+                value: `<@${element[0]}>\n${element[1]} messages`,
+                inline: true
+              }); // fields get pushed into embed
+
+              guild.members.forEach(async member => {
+                if (member.id === element[0]) {
+                  console.log(`Element: ${element[0]} - ${element[1]}\nMember: ${member.id}`)
+                  if (placement < 4) {
+                    top += `${member.id};s;`;
+                    obj[member.id] = 0;
+                  } else if (placement >= Math.round(total / 5) && placement <= Math.round(total / 3)) {
+                    close += `${member.id};s;`;
+                    obj[member.id] = 0;
+                  } else if (placement >= Math.round(total / 3) && placement <= Math.round(total / 2)) {
+                    regular += `${member.id};s;`;
+                    obj[member.id] = 0;
+                  } else if (placement >= Math.round(total / 2) && placement <= total) {
+                    barely += `${member.id};s;`;
+                    obj[member.id] = 0;
+                  }
+                }
+              });
+
+              placement++;
+            } else if (element[1] === 0) {
+              lurkers += `<@${element[0]}> `;
+              lurk += `${element[0]};s;`
+            }
+          }
+        })().catch(console.error);
+
+        memberRank(guild, top, close, regular, barely, lurk); //Determine rankings
+
+        rankingEmbed.fields.push(
+          { name: `Lurkers`, value: lurkers, inline: false });
+
+        timeObj.season++;
+        fs.writeFileSync('./time.json', JSON.stringify(timeObj));
+        fs.writeFileSync('./members.json', JSON.stringify(obj));
+
+        return general.send(rankingEmbed);
+      } catch (err) {
+        console.log(err);
+      }
     } else {
       console.log(`[EOW CHECK] End of week in: ${eow}`);
       timeObj.week = moment().week();
@@ -128,4 +191,87 @@ client.login(process.env.BOT_TOKEN);
 export default {
   commandPrefix,
   client
+}
+
+async function memberRank(guild, top, close, regular, barely, lurk) {
+  let topA = top.split(';s;');
+  let closeA = close.split(';s;');
+  let regularA = regular.split(';s;');
+  let barelyA = barely.split(';s;');
+  let lurkA = lurk.split(';s;');
+
+  // Role Declarations
+  let unrankR = guild.roles.get("673284195468050434");
+  let lurkR = guild.roles.get("672811156523712522");
+  let barelyR = guild.roles.get("673281903335571467");
+  let regularR = guild.roles.get("673282194743099392");
+  let closeR = guild.roles.get("673281913179471892");
+  let topR = guild.roles.get("673281909547335691");
+
+  console.log("Determining top 3")
+  for (let i = 0; i < topA.length; i++) {
+    const member = await guild.members.get(topA[i]);
+    if (member !== undefined) {
+      console.log(`Top: ${topA[i]}`)
+      const member = await guild.members.get(topA[i]);
+      await member.addRole(topR);
+      if (member.roles.has("673284195468050434")) member.removeRole(unrankR)
+      if (member.roles.has("672811156523712522")) member.removeRole(lurkR)
+      if (member.roles.has("673282194743099392")) member.removeRole(regularR)
+      if (member.roles.has("673281913179471892")) member.removeRole(closeR)
+      if (member.roles.has("673281903335571467")) member.removeRole(barelyR)
+    }
+  }
+  console.log("Determining those who came close")
+  for (let i = 0; i < closeA.length; i++) {
+    const member = await guild.members.get(closeA[i]);
+    if (member !== undefined) {
+      console.log(`Close: ${closeA[i]}`)
+      await member.addRole(closeR);
+      if (member.roles.has("673284195468050434")) member.removeRole(unrankR)
+      if (member.roles.has("672811156523712522")) member.removeRole(lurkR)
+      if (member.roles.has("673282194743099392")) member.removeRole(regularR)
+      if (member.roles.has("673281903335571467")) member.removeRole(barelyR)
+      if (member.roles.has("673281909547335691")) member.removeRole(topR)
+    }
+  }
+  console.log("Determining Regulars")
+  for (let i = 0; i < regularA.length; i++) {
+    const member = await guild.members.get(regularA[i]);
+    if (member !== undefined) {
+      console.log(`Regular: ${regularA[i]}`)
+      await member.addRole(regularR);
+      if (member.roles.has("673284195468050434")) member.removeRole(unrankR)
+      if (member.roles.has("672811156523712522")) member.removeRole(lurkR)
+      if (member.roles.has("673281903335571467")) member.removeRole(barelyR)
+      if (member.roles.has("673281913179471892")) member.removeRole(closeR)
+      if (member.roles.has("673281909547335691")) member.removeRole(topR)
+    }
+  }
+  console.log("Determining Barely Active")
+  for (let i = 0; i < barelyA.length; i++) {
+    const member = await guild.members.get(barelyA[i]);
+    if (member !== undefined) {
+      console.log(`Barely active: ${barelyA[i]}`)
+      await member.addRole(barelyR);
+      if (member.roles.has("673284195468050434")) member.removeRole(unrankR)
+      if (member.roles.has("672811156523712522")) member.removeRole(lurkR)
+      if (member.roles.has("673282194743099392")) member.removeRole(regularR)
+      if (member.roles.has("673281913179471892")) member.removeRole(closeR)
+      if (member.roles.has("673281909547335691")) member.removeRole(topR)
+    }
+  }
+  console.log("Determining Lurkers")
+  for (let i = 0; i < lurkA.length; i++) {
+    const member = await guild.members.get(lurkA[i]);
+    if (member !== undefined) {
+      console.log(`Lurker: ${lurkA[i]}`)
+      await member.addRole(lurkR);
+      if (member.roles.has("673284195468050434")) member.removeRole(unrankR)
+      if (member.roles.has("673281903335571467")) member.removeRole(barelyR)
+      if (member.roles.has("673282194743099392")) member.removeRole(regularR)
+      if (member.roles.has("673281913179471892")) member.removeRole(closeR)
+      if (member.roles.has("673281909547335691")) member.removeRole(topR)
+    }
+  }
 }
