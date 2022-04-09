@@ -11,7 +11,7 @@
     "discord.js": "^11.4.2",
     "dotenv": "^6.2.0",
     "esm": "^3.2.14",
-    "moment": "^2.24.0",
+    "moment": "^2.29.2",
     "moment-timezone": "^0.5.27",
     "nekos.life": "^2.0.5",
     "node-fetch": "^2.3.0",
